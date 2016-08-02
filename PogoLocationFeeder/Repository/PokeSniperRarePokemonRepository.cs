@@ -9,6 +9,7 @@ using System.Runtime.Caching;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace PogoLocationFeeder.Repository
 {
@@ -34,12 +35,15 @@ namespace PogoLocationFeeder.Repository
                 request.Accept = "application/json";
                 request.Method = "GET";
                 request.Timeout = 20000;
-
+                Thread.Sleep(20 * 1000);
                 using (var response = request.GetResponse())
                 {
+                    Thread.Sleep(10 * 1000);
                     using (var reader = new StreamReader(response.GetResponseStream()))
                     {
-                        Wrapper wrapper = JsonConvert.DeserializeObject<Wrapper>(reader.ReadToEnd());
+                        string allLine = reader.ReadToEnd();
+                        Log.Info("response from Sinper :{" + allLine +"}\n");
+                        Wrapper wrapper = JsonConvert.DeserializeObject<Wrapper>(allLine);
                         List<SniperInfo> list = new List<SniperInfo>();
                         foreach (Result result in wrapper.results)
                         {
@@ -51,6 +55,7 @@ namespace PogoLocationFeeder.Repository
                         }
                         return list;
                     }
+                    
                 }
             }
             catch (Exception e)

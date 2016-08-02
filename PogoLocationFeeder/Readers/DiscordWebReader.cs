@@ -31,11 +31,12 @@ namespace PogoLocationFeeder
             catch (WebException e)
             {
                 Log.Warn($"Experiencing connection issues. Throttling...");
-                Thread.Sleep(30 * 1000);
+                throw e;
             }
             catch (Exception e)
             {
                 Log.Warn($"Exception: {e.ToString()}\n\n\n");
+                throw e;
             }
         }
 

@@ -11,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using System.Text;
+using System.Threading;
 
 namespace PogoLocationFeeder.Repository
 {
@@ -68,6 +69,7 @@ namespace PogoLocationFeeder.Repository
                 request.Headers.Add("Cookie:" + session.cookieHeader);
                 using (var response = request.GetResponse())
                 {
+                    Thread.Sleep(3 * 1000);
                     using (var reader = new StreamReader(response.GetResponseStream()))
                     {
                         List<TrackemonResult> resultList = JsonConvert.DeserializeObject<List<TrackemonResult>>(reader.ReadToEnd());

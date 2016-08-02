@@ -58,18 +58,34 @@ namespace PogoLocationFeeder
             {
                 // 10035 == WSAEWOULDBLOCK
                 return (e.NativeErrorCode.Equals(10035));
+            }catch(System.ObjectDisposedException e)
+            {
+                try { 
+                client.Close();
+                }catch(Exception e1)
+                {
+                }
+                return false;
             }
             finally
             {
-                client.Blocking = blockingState;
+                try
+                {
+                    client.Blocking = blockingState;
+                }
+                catch (Exception e)
+                {
+
+                }
             }
         }
 
         public void StartNet(int port)
         {
 
-            Log.Plain("PogoLocationFeeder is brought to you via https://github.com/5andr0/PogoLocationFeeder");
-            Log.Plain("This software is 100% free and open-source.\n");
+            /*Log.Plain("PogoLocationFeeder is brought to you via https://github.com/5andr0/PogoLocationFeeder");
+            Log.Plain("This software is 100% free and open-source.\n");*/
+            Log.Plain("PogoLocationFeeder branch https://github.com/squall1009/PogoLocationFeeder\n");
 
             Log.Info("Application starting...");
             try
@@ -122,9 +138,10 @@ namespace PogoLocationFeeder
                     {
                         NetworkStream networkStream = socket.GetStream();
                         StreamWriter s = new StreamWriter(networkStream);
-
+                        lock (s) { 
                         s.WriteLine(JsonConvert.SerializeObject(target));
                         s.Flush();
+                        }
                     }
                     catch (Exception e)
                     {
@@ -156,29 +173,44 @@ namespace PogoLocationFeeder
             StartNet(settings.Port);
 
             PollRarePokemonRepositories(settings);
+            DiscordWebReader discordWebReader = null;
+            while (true) {
+                try {
+                    discordWebReader = new DiscordWebReader();
+                    if(discordWebReader == null || discordWebReader.stream == null)
+                    {
+                        Thread.Sleep(30 * 1000);
+                        continue;
+                    }
+                }catch(Exception e)
+                {
+                    Thread.Sleep(30 * 1000);
+                    continue;
+                }
 
-            var discordWebReader = new DiscordWebReader();
-
-            while (true)
-            {
-                try
+                while (true)
                 {
-                    pollDiscordFeed(discordWebReader.stream);
-                }
-                catch (WebException e)
-                {
-                    Log.Warn($"Experiencing connection issues. Throttling...");
-                    discordWebReader.InitializeWebClient();
-                }
-                catch (Exception e)
-                {
-                    Log.Warn($"Unknown exception", e);
-                    break;
-                }
-                finally
-                {
-                    Thread.Sleep(20 * 1000);
-                }
+                    try
+                   {
+                     pollDiscordFeed(discordWebReader.stream);
+                  }
+                  catch (WebException e)
+                  {
+                      Log.Warn($"Experiencing connection issues. Throttling...",e);
+                        break;
+                      /*discordWebReader.InitializeWebClient();*/
+                  }
+                   catch (Exception e)
+                   {
+                      Log.Warn($"Unknown exception", e);
+                       break;
+                   }
+                   finally
+                   {
+           
+                    Thread.Sleep(5 * 1000);
+                  }
+               }
             }
 
             Console.ReadKey(true);
